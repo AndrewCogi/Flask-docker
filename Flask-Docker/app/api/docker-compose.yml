@@ -1,0 +1,11 @@
+version: "3.9.12"
+
+services:
+  mlapp:
+    container_name: mlapp
+    image: chohyunsik/mlapp
+    ports:
+      - "5000:5000"
+    build:
+      context: .
+      dockerfile: Dockerfile
