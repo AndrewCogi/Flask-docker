@@ -1,6 +1,7 @@
 # Import Flask
 from flask import Flask, jsonify, request
 from utilities import predict_pipeline
+import socket
 
 # Make Flask
 app = Flask(__name__)
@@ -35,4 +36,6 @@ def predct():
 
 # Run Flask server
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    thisIP = socket.gethostbyname(socket.gethostname())
+    print("This PC IP:", thisIP)
+    app.run(host=thisIP, debug=True)

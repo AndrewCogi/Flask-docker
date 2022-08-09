@@ -1,11 +1,19 @@
-version: "3.9.12"
+# Compose file version
+version: "3.7"
 
+# Make one service
 services:
+  # Service name
   mlapp:
+    # Container name
     container_name: mlapp
+    # Image -> [docker hub account]/[container_name]
     image: chohyunsik/mlapp
+    # Port setting
     ports:
       - "5000:5000"
+    # Build
     build:
+      # Location of Dockerfile
       context: .
       dockerfile: Dockerfile
