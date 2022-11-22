@@ -39,3 +39,4 @@ if __name__ == "__main__":
     thisIP = socket.gethostbyname(socket.gethostname())
     print("This PC IP:", thisIP)
     app.run(host=thisIP, debug=True)
+    # app.run(host='localhost', debug=True)

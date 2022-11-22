@@ -1,5 +1,5 @@
 # Select python version
-FROM python:3.9.12
+FROM python:3.9.13
 
 # Copy requirements.txt for installation
 COPY requirements.txt .
