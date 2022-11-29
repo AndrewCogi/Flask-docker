@@ -24,12 +24,22 @@ import cv2
 # fileName = "1.jpeg"
 # storage.child(path_on_cloud).download("","IMAGES/temp.jpg")
 
-# test
-path_on_cloud = "drj9802@gmail.com/balance/220911/VIDEO_220911_23:58_.mp4"
-fileName = "1.jpeg"
-storage.child(path_on_cloud).download("","../../tempDB/temp.mp4")
+# example (동영상 다운로드)
+# path_on_cloud : 동영상이 저장되어있는 위치(영상이름까지 기재)
+path_on_cloud = "temp/temp.mp4"
+# local_path : local에 동영상을 저장할 위치
+local_path = "../../tempDB/temp.mp4"
+# 다운로드
+storage.child(path_on_cloud).download("",local_path)
 
-# storage.child("temp/temp.mp4").put("IMAGES/temp.mp4")
+# example (동영상 업로드)
+# path_on_cloud : 동영상이 저장될 위치(영상이름까지 기재)
+path_on_cloud = "temp/temp.mp4"
+# local_path : 올릴 동영상이 있는 위치
+local_path = "../../tempDB/temp.mp4"
+# 업로드
+storage.child(path_on_cloud).put(local_path)
+
 
 # Make Flask
 app = Flask(__name__)
