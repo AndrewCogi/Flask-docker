@@ -10,13 +10,13 @@
 # 'PoseLandmark.RIGHT_HEEL', 'PoseLandmark.LEFT_FOOT_INDEX', 'PoseLandmark.RIGHT_FOOT_INDEX']
 
 # 남겨둘 포즈, 일단 17개의 landmark만 적용한다
-Poses = ['PoseLandmark.NOSE', 'PoseLandmark.LEFT_EYE', 'PoseLandmark.RIGHT_EYE', 'PoseLandmark.LEFT_EAR', 'PoseLandmark.RIGHT_EAR', 'PoseLandmark.LEFT_SHOULDER',
-        'PoseLandmark.RIGHT_SHOULDER', 'PoseLandmark.LEFT_ELBOW', 'PoseLandmark.RIGHT_ELBOW', 'PoseLandmark.LEFT_WRIST', 'PoseLandmark.RIGHT_WRIST',
-        'PoseLandmark.LEFT_HIP', 'PoseLandmark.RIGHT_HIP', 'PoseLandmark.LEFT_KNEE', 'PoseLandmark.RIGHT_KNEE', 'PoseLandmark.LEFT_ANKLE', 'PoseLandmark.RIGHT_ANKLE']
+# Poses = ['PoseLandmark.NOSE', 'PoseLandmark.LEFT_EYE', 'PoseLandmark.RIGHT_EYE', 'PoseLandmark.LEFT_EAR', 'PoseLandmark.RIGHT_EAR', 'PoseLandmark.LEFT_SHOULDER',
+#         'PoseLandmark.RIGHT_SHOULDER', 'PoseLandmark.LEFT_ELBOW', 'PoseLandmark.RIGHT_ELBOW', 'PoseLandmark.LEFT_WRIST', 'PoseLandmark.RIGHT_WRIST',
+#         'PoseLandmark.LEFT_HIP', 'PoseLandmark.RIGHT_HIP', 'PoseLandmark.LEFT_KNEE', 'PoseLandmark.RIGHT_KNEE', 'PoseLandmark.LEFT_ANKLE', 'PoseLandmark.RIGHT_ANKLE']
 
 # 남겨둘 포즈, 8개의 landmark만 적용
-# Poses = ['PoseLandmark.LEFT_ELBOW', 'PoseLandmark.RIGHT_ELBOW', 'PoseLandmark.LEFT_WRIST', 'PoseLandmark.RIGHT_WRIST',
-#          'PoseLandmark.LEFT_KNEE', 'PoseLandmark.RIGHT_KNEE', 'PoseLandmark.LEFT_ANKLE', 'PoseLandmark.RIGHT_ANKLE']
+Poses = ['PoseLandmark.LEFT_ELBOW', 'PoseLandmark.RIGHT_ELBOW', 'PoseLandmark.LEFT_WRIST', 'PoseLandmark.RIGHT_WRIST',
+         'PoseLandmark.LEFT_KNEE', 'PoseLandmark.RIGHT_KNEE', 'PoseLandmark.LEFT_ANKLE', 'PoseLandmark.RIGHT_ANKLE']
 
 # Poses에 있는 landmark만 남긴 리스트를 반환
 def landmark_filtering(pose):

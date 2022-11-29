@@ -14,7 +14,7 @@ with open('video.json') as json_file:
     json_data = json.load(json_file)
 
 # 해당 부분 수정을 통해 원하는 사진을 비교 가능, 현재 가능 index 0 ~ 3
-input_num_1 = 3
+input_num_1 = 4
 
 # 포즈 선정후, 
 pose1 = input_json[input_num_1]
