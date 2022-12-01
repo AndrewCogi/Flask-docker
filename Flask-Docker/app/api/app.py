@@ -12,37 +12,72 @@ with open("auth.json") as f:
 firebase = pyrebase.initialize_app(config)
 storage = firebase.storage()
 
-# test
-import cv2
-# cap = cv2.VideoCapture("../../../Pose_Similarity_Check_Flask/videos/Workout.mp4")
-# cap = "../../../Pose_Similarity_Check_Flask/images/1.jpeg"
-# signin = {"pw":"12341234","ID":"cho"}
-# storage.child("images/1.jpeg").put(cap)
 
-# test
-# path_on_cloud = "temp/1.jpeg"
-# fileName = "1.jpeg"
-# storage.child(path_on_cloud).download("","IMAGES/temp.jpg")
 
 # example (동영상 다운로드)
 # path_on_cloud : 동영상이 저장되어있는 위치(영상이름까지 기재)
-path_on_cloud = "temp/temp.mp4"
+# path_on_cloud = "temp/temp.mp4"
+# path_on_cloud2 = "temp/celebrity.mp4"
 # local_path : local에 동영상을 저장할 위치
-local_path = "../../tempDB/temp.mp4"
+# local_path = "tempDB/video/temp.mp4"
+# local_path2 = "tempDB/image/celebrity.mp4"
 # 다운로드
-storage.child(path_on_cloud).download("",local_path)
+# storage.child(path_on_cloud).download("",local_path)
+# storage.child(path_on_cloud2).download("",local_path2)
 
 # example (동영상 업로드)
 # path_on_cloud : 동영상이 저장될 위치(영상이름까지 기재)
-path_on_cloud = "temp/temp.mp4"
+# path_on_cloud = "temp/temp.mp4"
 # local_path : 올릴 동영상이 있는 위치
-local_path = "../../tempDB/temp.mp4"
+# local_path = "tempDB/video/temp.mp4"
 # 업로드
-storage.child(path_on_cloud).put(local_path)
+# storage.child(path_on_cloud).put(local_path)
+
 
 
 # Make Flask
 app = Flask(__name__)
+
+@app.route('/download',methods=['POST'])
+def download():
+    # Get data in json format
+    data = request.json
+    print("Get data (download):", data)
+
+    # download temp.mp4
+    if data['fileName'] == 'temp':
+        path_on_cloud = "temp/temp.mp4"
+        local_path = "tempDB/video/temp.mp4"
+        storage.child(path_on_cloud).download("",local_path)
+
+    # download celebrity.mp4
+    elif data['fileName'] == 'celebrity':
+        path_on_cloud = "temp/celebrity.mp4"
+        local_path = "tempDB/image/celebrity.mp4"
+        storage.child(path_on_cloud).download("",local_path)
+
+    return jsonify("Download Complete")
+
+@app.route('/upload',methods=['POST'])
+def upload():
+    # Get data in json format
+    data = request.json
+    print("Get data (upload):", data)
+
+    # upload temp.mp4
+    if data['fileName'] == 'temp':
+        path_on_cloud = "temp/temp.mp4"
+        local_path = "tempDB/video/temp.mp4"
+        storage.child(path_on_cloud).put(local_path)
+
+    # upload celebrity.mp4
+    elif data['fileName'] == 'celebrity':
+        path_on_cloud = "temp/celebrity.mp4"
+        local_path = "tempDB/image/celebrity.mp4"
+        storage.child(path_on_cloud).put(local_path)
+    
+    return jsonify("Upload Complete")
+        
 
 
 # For the "~/predict" command, execute the following function:
@@ -50,7 +85,7 @@ app = Flask(__name__)
 def predict():
     # Get data in json format
     data = request.json
-    print("Get data:", data)
+    print("Get data (predict):", data)
 
     # Exception 1 : There is no data
     try:

@@ -1,5 +1,5 @@
 # Compose file version
-version: "3.7"
+version: "3.9"
 
 # Make one service
 services:
@@ -9,6 +9,10 @@ services:
     container_name: mlapp
     # Image -> [docker hub account]/[container_name]
     image: chohyunsik/mlapp
+    # Volume setting -> tempDB/video & image
+    volumes:
+      - tempDB:/tempDB/video
+      - tempDB:/tempDB/image
     # Port setting
     ports:
       - "5000:5000"
@@ -17,3 +21,12 @@ services:
       # Location of Dockerfile
       context: .
       dockerfile: Dockerfile
+    # Environment
+    environment:
+      # Python print enable
+      - PYTHONUNBUFFERED=1
+
+# Allow volumes external : true
+volumes:
+  tempDB:
+    external: true
