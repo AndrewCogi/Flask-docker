@@ -1,7 +1,11 @@
-# Import Flask
+# Import Libraries
+from gevent import monkey
+monkey.patch_all()
+
 from flask import Flask, jsonify, request
 from utilities import predict_pipeline
 from gevent.pywsgi import WSGIServer
+import cv2
 import socket
 import json
 import pyrebase
@@ -16,10 +20,10 @@ storage = firebase.storage()
 
 # example (동영상 다운로드)
 # path_on_cloud : 동영상이 저장되어있는 위치(영상이름까지 기재)
-# path_on_cloud = "temp/temp.mp4"
+# path_on_cloud = "bjy123bjy@gmail.com/exercise/unselected/221202/VIDEO_221202_13:30_.mp4"
 # path_on_cloud2 = "temp/celebrity.mp4"
 # local_path : local에 동영상을 저장할 위치
-# local_path = "tempDB/video/temp.mp4"
+# local_path = "tempDB/video/bjy123bjy.mp4"
 # local_path2 = "tempDB/image/celebrity.mp4"
 # 다운로드
 # storage.child(path_on_cloud).download("",local_path)
@@ -38,26 +42,33 @@ storage = firebase.storage()
 # Make Flask
 app = Flask(__name__)
 
+# command : <none>
+@app.route('/',methods=['GET','POST'])
+def hello():
+    return jsonify("Hello Client!")
+
+# command : download
 @app.route('/download',methods=['POST'])
 def download():
     # Get data in json format
     data = request.json
-    print("Get data (download):", data)
+    print("Get data:", data)
 
     # download temp.mp4
     if data['fileName'] == 'temp':
-        path_on_cloud = "temp/temp.mp4"
+        path_on_cloud = "temp/video/temp.mp4"
         local_path = "tempDB/video/temp.mp4"
         storage.child(path_on_cloud).download("",local_path)
 
     # download celebrity.mp4
     elif data['fileName'] == 'celebrity':
-        path_on_cloud = "temp/celebrity.mp4"
+        path_on_cloud = "temp/image/celebrity.mp4"
         local_path = "tempDB/image/celebrity.mp4"
         storage.child(path_on_cloud).download("",local_path)
 
     return jsonify("Download Complete")
 
+# command : upload
 @app.route('/upload',methods=['POST'])
 def upload():
     # Get data in json format
@@ -66,18 +77,18 @@ def upload():
 
     # upload temp.mp4
     if data['fileName'] == 'temp':
-        path_on_cloud = "temp/temp.mp4"
+        path_on_cloud = "temp/video/temp.mp4"
         local_path = "tempDB/video/temp.mp4"
         storage.child(path_on_cloud).put(local_path)
 
     # upload celebrity.mp4
     elif data['fileName'] == 'celebrity':
-        path_on_cloud = "temp/celebrity.mp4"
+        path_on_cloud = "temp/image/celebrity.mp4"
         local_path = "tempDB/image/celebrity.mp4"
         storage.child(path_on_cloud).put(local_path)
-    
+
     return jsonify("Upload Complete")
-        
+
 
 
 # For the "~/predict" command, execute the following function:

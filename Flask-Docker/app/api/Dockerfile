@@ -5,6 +5,7 @@ FROM python:3.9.13
 COPY requirements.txt .
 
 # Install 'requirements.txt'
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy all of docker image contents
