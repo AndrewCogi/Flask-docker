@@ -5,7 +5,9 @@ monkey.patch_all()
 from flask import Flask, jsonify, request
 from utilities import predict_pipeline
 from gevent.pywsgi import WSGIServer
+from collections import OrderedDict
 import cv2
+import os
 import socket
 import json
 import pyrebase
@@ -43,30 +45,103 @@ storage = firebase.storage()
 app = Flask(__name__)
 
 # command : <none>
-@app.route('/',methods=['GET','POST'])
+@app.route('/hello',methods=['GET','POST'])
 def hello():
-    return jsonify("Hello Client!")
+    print("Hello!")
+    print("===end===")
+    return jsonify("Hello!")
 
-# command : download
-@app.route('/download',methods=['POST'])
+# command : download_and_analyze
+@app.route('/download_and_analyze',methods=['POST'])
 def download():
-    # Get data in json format
-    data = request.json
-    print("Get data:", data)
+    # Get parameters to dictionary format
+    parameter_dict = request.args.to_dict()
+    # If no data
+    if len(parameter_dict) == 0:
+        print("No parameter")
+        return jsonify("ERROR 1: No parameter")
 
-    # download temp.mp4
-    if data['fileName'] == 'temp':
-        path_on_cloud = "temp/video/temp.mp4"
-        local_path = "tempDB/video/temp.mp4"
-        storage.child(path_on_cloud).download("",local_path)
+    # If have data, convert into key-value
+    # parameters = ''
+    keys = []
+    values = []
+    for key in parameter_dict.keys():
+        # parameters += 'key: {}, value: {}\n'.format(key, request.args[key])
+        keys.append(key)
+        values.append(request.args[key])
+    print('keys:', keys)
+    print('values:', values)
+    # print('parameters:', parameters)
+    
+    # Download video
+    path_on_cloud = values[0]+".mp4"
+    local_path = "tempDB/video/"+values[0].split('/')[-1]+".mp4"
+    print('path_on_cloud:', path_on_cloud)
+    print('local_path:', local_path+'\n===end===')
+    storage.child(path_on_cloud).download("",local_path)
 
-    # download celebrity.mp4
-    elif data['fileName'] == 'celebrity':
-        path_on_cloud = "temp/image/celebrity.mp4"
-        local_path = "tempDB/image/celebrity.mp4"
-        storage.child(path_on_cloud).download("",local_path)
+    # Analyze
+    # TODO
 
-    return jsonify("Download Complete")
+    # Make result files (1. json file)
+    file_data = OrderedDict()
+
+    file_data["name"] = "user1"
+    file_data["aa"] = "ex_aa"
+    file_data["bb"] = {'x': 100, 'y': 70, 'z': 88}
+    file_data["cc"] = "ex_cc"
+    file_data["피드백"] = "굿"
+
+    print(json.dumps(file_data, ensure_ascii=False, indent="\t"))
+
+    with open('tempDB/result/'+values[0].split('/')[-1]+'.json', 'w', encoding='utf-8') as make_file:
+        json.dump(file_data, make_file, ensure_ascii=False, indent="\t")
+    
+    # Upload json file
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'.json').put('tempDB/result/'+values[0].split('/')[-1]+'.json')
+    
+    # Get result files (2. image)
+    storage.child('temp/image/good.jpg').download("",'tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
+    ex_image1 = cv2.imread('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
+    storage.child('temp/image/graph.jpg').download("",'tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+    ex_image2 = cv2.imread('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+
+    # Upload image files
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_good.jpg').put('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_graph.jpg').put('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+
+    # Remove temporary files in the volume
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'.json')
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+    os.remove('tempDB/video/'+values[0].split('/')[-1]+'.mp4')
+
+    # TODO: firebase에 저장되어있는 영상 삭제되도록 해야 함.
+
+    # Jobs finished!
+    return jsonify("RESULT")
+    # # Get data in json format
+    # data = request.json
+    # print("Get data:", data)
+
+    # # download temp.mp4
+    # if data['fileName'] == 'temp':
+    #     path_on_cloud = "temp/video/temp.mp4"
+    #     local_path = "tempDB/video/temp.mp4"
+    #     storage.child(path_on_cloud).download("",local_path)
+
+    # # download celebrity.mp4
+    # elif data['fileName'] == 'celebrity':
+    #     path_on_cloud = "temp/image/celebrity.mp4"
+    #     local_path = "tempDB/image/celebrity.mp4"
+    #     storage.child(path_on_cloud).download("",local_path)
+
+    # return jsonify("Download Complete")
+
+# command : clean
+@app.route('/clean',methods=['DELETE'])
+def clean():
+    return jsonify("Clean Complete")
 
 # command : upload
 @app.route('/upload',methods=['POST'])
