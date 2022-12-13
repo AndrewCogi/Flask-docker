@@ -101,20 +101,23 @@ def download():
     storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'.json').put('tempDB/result/'+values[0].split('/')[-1]+'.json')
     
     # Get result files (2. image)
-    storage.child('temp/image/good.jpg').download("",'tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
-    ex_image1 = cv2.imread('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
-    storage.child('temp/image/graph.jpg').download("",'tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
-    ex_image2 = cv2.imread('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+    storage.child('temp/image/worst1.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
+    storage.child('temp/image/worst2.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
+    storage.child('temp/image/graph.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
 
     # Upload image files
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_good.jpg').put('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_graph.jpg').put('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_worst1.png').put('tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_worst2.png').put('tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
+    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_graph.png').put('tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
 
     # Remove temporary files in the volume
     os.remove('tempDB/result/'+values[0].split('/')[-1]+'.json')
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_good.jpg')
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_graph.jpg')
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
+    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
     os.remove('tempDB/video/'+values[0].split('/')[-1]+'.mp4')
+    fileName = 'temp/exercise/'+values[0].split('/')[-1]+'.mp4'
+    storage.delete(fileName,token=None)
 
     # TODO: firebase에 저장되어있는 영상 삭제되도록 해야 함.
 
