@@ -129,10 +129,10 @@ def download():
     for i in range(1,6):
         cloud_path_usr = 'temp/image/'+email_string+'/'+videoName_string+'/best'+str(i)+'_user.jpg'
         cloud_path_pro = 'temp/image/'+email_string+'/'+videoName_string+'/best'+str(i)+'_pro.jpg'
-        local_path_usr = 'tempDB/image/best'+str(i)+'_user.jpg'
-        local_path_pro = 'tempDB/image/best'+str(i)+'_pro.jpg'
-        storage.child(cloud_path_usr).put(local_path_usr)
-        storage.child(cloud_path_pro).put(local_path_pro)
+        local_path_usr_ = 'tempDB/image/best'+str(i)+'_user.jpg'
+        local_path_pro_ = 'tempDB/image/best'+str(i)+'_pro.jpg'
+        storage.child(cloud_path_usr).put(local_path_usr_)
+        storage.child(cloud_path_pro).put(local_path_pro_)
 
     # Upload graph file
     graph_path = "temp/image/"+email_string+"/"+videoName_string+"/graph.png"
