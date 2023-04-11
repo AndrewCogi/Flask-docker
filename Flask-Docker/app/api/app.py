@@ -11,6 +11,7 @@ import os
 import socket
 import json
 import pyrebase
+from Pose_Similarity_Check.pose_match import get_pose_similarity
 
 with open("auth.json") as f:
     config = json.load(f)
@@ -66,134 +67,101 @@ def download():
     keys = []
     values = []
     for key in parameter_dict.keys():
-        # parameters += 'key: {}, value: {}\n'.format(key, request.args[key])
         keys.append(key)
         values.append(request.args[key])
     print('keys:', keys)
     print('values:', values)
-    # print('parameters:', parameters)
-    
-    # Download video
+
+    Squat_string = values[0].split('/')[-1].split('_')[1] # [method]만 추출
+    email_string = values[0].split('/')[3]# example123@gmail.com만 추출
+    videoName_string = values[0].split('/')[-1] # exercise_[method]_[timestamp]만 추출
+
+    # Download video (user)
     path_on_cloud = values[0]+".mp4"
-    local_path = "tempDB/video/"+values[0].split('/')[-1]+".mp4"
+    local_path = "tempDB/video/"+videoName_string+".mp4"
     print('path_on_cloud:', path_on_cloud)
-    print('local_path:', local_path+'\n===end===')
+    print('local_path:', local_path+'\n')
     storage.child(path_on_cloud).download("",local_path)
 
+    # Download video (pro)
+    path_on_cloud_pro = "temp/video/pro/"+Squat_string+".mp4" 
+    local_path_pro = "tempDB/video/"+Squat_string+".mp4"
+    print('path_on_cloud (pro):', path_on_cloud)
+    print('local_path (pro):', local_path+'\n')
+    storage.child(path_on_cloud_pro).download("",local_path_pro)
+
     # Analyze
-    # TODO
+    print('====[Analyzing]====')
+    results, frame_pairs, top_indices = get_pose_similarity(local_path_pro, local_path, Squat_string)
 
-    # Make result files (1. json file)
+    # % 변환
+    results = [arr[0][0]*100 for arr in results]
+
+    print('results: ',results)
+
+    # Make result file contents (1. json file)
     file_data = OrderedDict()
+    file_data["result"] = int(sum(results)/len(results)) # 평균값
+    file_data["result1"] = int(results[0])
+    file_data["result2"] = int(results[1])
+    file_data["result3"] = int(results[2])
+    file_data["result4"] = int(results[3])
+    file_data["result5"] = int(results[4])
+    # file_data["bb"] = {'x': 100, 'y': 70, 'z': 88}
 
-    file_data["name"] = "user1"
-    file_data["aa"] = "ex_aa"
-    file_data["bb"] = {'x': 100, 'y': 70, 'z': 88}
-    file_data["cc"] = "ex_cc"
-    file_data["피드백"] = "굿"
-
+    # Making json file
     print(json.dumps(file_data, ensure_ascii=False, indent="\t"))
-
-    with open('tempDB/result/'+values[0].split('/')[-1]+'.json', 'w', encoding='utf-8') as make_file:
+    with open('tempDB/result/result.json', 'w', encoding='utf-8') as make_file:
         json.dump(file_data, make_file, ensure_ascii=False, indent="\t")
     
+    # Make image files (2. image files)
+    for i, index in enumerate(top_indices):
+        frame1, frame2 = frame_pairs[index]
+        cv2.imwrite(f"tempDB/image/best{i + 1}_user.jpg", frame1)
+        cv2.imwrite(f"tempDB/image/best{i + 1}_pro.jpg", frame2)
+
+    # Make graph file (3. graph file) -> pose_match.py
+
     # Upload json file
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'.json').put('tempDB/result/'+values[0].split('/')[-1]+'.json')
-    
-    # Get result files (2. image)
-    storage.child('temp/image/worst1.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
-    storage.child('temp/image/worst2.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
-    storage.child('temp/image/graph.png').download("",'tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
+    storage.child('temp/result/'+email_string+'/'+videoName_string+'.json').put('tempDB/result/result.json')
 
     # Upload image files
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_worst1.png').put('tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_worst2.png').put('tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
-    storage.child(values[0].split('/')[-1].split('_')[0]+'/'+values[0].split('/')[-1]+'_result/'+values[0].split('/')[-1]+'_graph.png').put('tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
+    for i in range(1,6):
+        cloud_path_usr = 'temp/image/'+email_string+'/'+videoName_string+'/best'+str(i)+'_user.jpg'
+        cloud_path_pro = 'temp/image/'+email_string+'/'+videoName_string+'/best'+str(i)+'_pro.jpg'
+        local_path_usr = 'tempDB/image/best'+str(i)+'_user.jpg'
+        local_path_pro = 'tempDB/image/best'+str(i)+'_pro.jpg'
+        storage.child(cloud_path_usr).put(local_path_usr)
+        storage.child(cloud_path_pro).put(local_path_pro)
+
+    # Upload graph file
+    graph_path = "temp/image/"+email_string+"/"+videoName_string+"/graph.png"
+    graph_local_path = 'tempDB/image/graph.png'
+    storage.child(graph_path).put(graph_local_path)
 
     # Remove temporary files in the volume
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'.json')
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_worst1.png')
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_worst2.png')
-    os.remove('tempDB/result/'+values[0].split('/')[-1]+'_graph.png')
-    os.remove('tempDB/video/'+values[0].split('/')[-1]+'.mp4')
-    fileName = 'temp/exercise/'+values[0].split('/')[-1]+'.mp4'
-    storage.delete(fileName,token=None)
+    os.remove('tempDB/result/result.json')
+    for i in range(1,6):
+        os.remove(f'tempDB/image/best{i}_user.jpg')
+        os.remove(f'tempDB/image/best{i}_pro.jpg')
+    os.remove(local_path)
+    os.remove(local_path_pro)
+    os.remove(graph_local_path)
+
+    # TODO: tempDB에 저장되는 파일들의 unique성이 필요함. 다중 접속 시, 파일명이 겹침.
 
     # TODO: firebase에 저장되어있는 영상 삭제되도록 해야 함.
+    # fileName = 'temp/exercise/'+values[0].split('/')[-1]+'.mp4'
+    # storage.delete(fileName,token=None)
+
 
     # Jobs finished!
     return jsonify("RESULT")
-    # # Get data in json format
-    # data = request.json
-    # print("Get data:", data)
-
-    # # download temp.mp4
-    # if data['fileName'] == 'temp':
-    #     path_on_cloud = "temp/video/temp.mp4"
-    #     local_path = "tempDB/video/temp.mp4"
-    #     storage.child(path_on_cloud).download("",local_path)
-
-    # # download celebrity.mp4
-    # elif data['fileName'] == 'celebrity':
-    #     path_on_cloud = "temp/image/celebrity.mp4"
-    #     local_path = "tempDB/image/celebrity.mp4"
-    #     storage.child(path_on_cloud).download("",local_path)
-
-    # return jsonify("Download Complete")
 
 # command : clean
 @app.route('/clean',methods=['DELETE'])
 def clean():
     return jsonify("Clean Complete")
-
-# command : upload
-@app.route('/upload',methods=['POST'])
-def upload():
-    # Get data in json format
-    data = request.json
-    print("Get data (upload):", data)
-
-    # upload temp.mp4
-    if data['fileName'] == 'temp':
-        path_on_cloud = "temp/video/temp.mp4"
-        local_path = "tempDB/video/temp.mp4"
-        storage.child(path_on_cloud).put(local_path)
-
-    # upload celebrity.mp4
-    elif data['fileName'] == 'celebrity':
-        path_on_cloud = "temp/image/celebrity.mp4"
-        local_path = "tempDB/image/celebrity.mp4"
-        storage.child(path_on_cloud).put(local_path)
-
-    return jsonify("Upload Complete")
-
-
-
-# For the "~/predict" command, execute the following function:
-@app.route('/predict',methods=['POST','GET'])
-def predict():
-    # Get data in json format
-    data = request.json
-    print("Get data (predict):", data)
-
-    # Exception 1 : There is no data
-    try:
-        sample = data['data']
-    except KeyError:
-        return jsonify({'error': 'No data sent'})
-
-    # predict the result
-    sample = [sample]
-    predictions = predict_pipeline(sample)
-
-    # Exception 2 : There is wrong input data
-    try:
-        result = jsonify(predictions[0])
-    except TypeError as e:
-        return jsonify({'error': str(e)+'aa'})
-
-    # Return result
-    return result
 
 
 # Run Flask server
