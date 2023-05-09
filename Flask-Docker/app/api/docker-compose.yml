@@ -1,5 +1,5 @@
 # Compose file version
-version: "3.9"
+version: "3.3"
 
 # Make one service
 services:
