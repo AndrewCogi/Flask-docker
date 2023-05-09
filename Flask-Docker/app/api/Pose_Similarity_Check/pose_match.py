@@ -3,12 +3,15 @@ import mediapipe as mp
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from concurrent.futures import ThreadPoolExecutor
+
 import sys, os
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="mediapipe")
+from Pose_Similarity_Check.openpose_skeleton import skeleton
 import matplotlib.pyplot as plt
-from Pose_Similarity_Check.openpose_skeleton.skeleton import draw
 import pandas as pd
+mp_drawing = mp.solutions.drawing_utils
+mp_pose = mp.solutions.pose
 
 face = [0, 1, 2, 3, 4, 25, 26, 27, 28, 29, 30, 31, 32]
 upper_body = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
@@ -21,12 +24,8 @@ exercise_landmarks = {
     # 다른 운동 종류에 대한 랜드마크 인덱스를 추가하세요.
 }
 
-def process_frame(frame):# pose estimation
-    mp_drawing = mp.solutions.drawing_utils
-    mp_pose = mp.solutions.pose
-
-    with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, model_complexity=1) as pose:
-        results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+def process_frame(frame,pose):# pose estimation
+    results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
     pose_landmarks = []
     if results.pose_landmarks:
@@ -94,9 +93,16 @@ def get_frame_similarity_list(video_path1, video_path2, exercise):
 
     return similarity_list
 
-def process_pair(frame1, frame2,exercise):# process frame
-    landmarks1, annotated_frame1 = process_frame(frame1)
-    landmarks2, annotated_frame2 = process_frame(frame2)
+def resize_frame(frame, scale_percent=50):
+    width = int(frame.shape[1] * scale_percent / 100)
+    height = int(frame.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+    return resized
+
+def process_pair(frame1, frame2,pose,exercise):# process frame
+    landmarks1, annotated_frame1 = process_frame(frame1,pose)
+    landmarks2, annotated_frame2 = process_frame(frame2,pose)
 
     if landmarks1.size > 0 and landmarks2.size > 0:
         normalized_landmarks1 = normalize_landmarks(landmarks1)
@@ -127,6 +133,28 @@ def plot_similarity(similarity_list, save_path):
 
     return fig
 
+def draw_joints(image_path):
+    # 이미지 읽기
+    image = cv2.imread(image_path)
+
+    # 이미지 컬러 공간을 BGR에서 RGB로 변환
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Mediapipe 포즈 객체 생성
+    pose = mp_pose.Pose(static_image_mode=True, model_complexity=2, min_detection_confidence=0.5)
+
+    # 포즈를 추정하고 결과를 얻음
+    results = pose.process(image_rgb)
+
+    # 원본 이미지에 포즈 랜드마크 그리기
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
+    # Mediapipe 리소스를 종료
+    pose.close()
+
+    return image
+
 def get_pose_similarity(video_path1, video_path2, exercise):# main function
 
     sk_frame1 = []
@@ -139,22 +167,22 @@ def get_pose_similarity(video_path1, video_path2, exercise):# main function
 
     similarity_list = []
     frame_pairs = []
+    with mp_pose.Pose(static_image_mode = False,min_detection_confidence=0.5, model_complexity=1) as pose:
+        with ThreadPoolExecutor() as executor:
+            while cap1.isOpened() and cap2.isOpened():
+                ret1, frame1 = cap1.read()
+                ret2, frame2 = cap2.read()
 
-    with ThreadPoolExecutor() as executor:
-        while cap1.isOpened() and cap2.isOpened():
-            ret1, frame1 = cap1.read()
-            ret2, frame2 = cap2.read()
+                if not ret1 or not ret2:
+                    break
 
-            if not ret1 or not ret2:
-                break
+                result = executor.submit(process_pair, frame1, frame2, pose, exercise)
+                result = result.result()
 
-            result = executor.submit(process_pair, frame1, frame2, exercise)
-            result = result.result()
-
-            if result:
-                frame1, frame2, similarity_cosine = result
-                similarity_list.append(similarity_cosine)
-                frame_pairs.append((frame1, frame2))
+                if result:
+                    frame1, frame2, similarity_cosine = result
+                    similarity_list.append(similarity_cosine)
+                    frame_pairs.append((frame1, frame2))
     cap1.release()
     cap2.release()
     similarities = []

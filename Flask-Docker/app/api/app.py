@@ -5,21 +5,33 @@ monkey.patch_all()
 from flask import Flask, jsonify, request
 from utilities import predict_pipeline
 from gevent.pywsgi import WSGIServer
-from collections import OrderedDict
 import cv2
 import os
 import socket
 import json
 import pyrebase
 from Pose_Similarity_Check.pose_match import get_pose_similarity
+from Pose_Similarity_Check.pose_match import draw_joints
 
 with open("auth.json") as f:
     config = json.load(f)
 
 firebase = pyrebase.initialize_app(config)
 storage = firebase.storage()
+database = firebase.database()
 
+# file_data = dict()
+# file_data["result"] = int(80) # 평균값
+# file_data["result1"] = int(60)
+# file_data["result2"] = int(70)
+# file_data["result3"] = int(80)
+# file_data["result4"] = int(90)
+# file_data["result5"] = int(100)
 
+# email_string = "example123@gmail.com"
+# videoName_string = "exercise_squat_2304112205"
+
+# database.child('temp/result/'+email_string.replace(".","_")+'/'+videoName_string).set(file_data)
 
 # example (동영상 다운로드)
 # path_on_cloud : 동영상이 저장되어있는 위치(영상이름까지 기재)
@@ -57,6 +69,9 @@ def hello():
 def download():
     # Get parameters to dictionary format
     parameter_dict = request.args.to_dict()
+    # test
+    print('==parameter_dict==')
+    print(parameter_dict)
     # If no data
     if len(parameter_dict) == 0:
         print("No parameter")
@@ -99,8 +114,8 @@ def download():
 
     print('results: ',results)
 
-    # Make result file contents (1. json file)
-    file_data = OrderedDict()
+    # Make result contents (1. json file)
+    file_data = dict()
     file_data["result"] = int(sum(results)/len(results)) # 평균값
     file_data["result1"] = int(results[0])
     file_data["result2"] = int(results[1])
@@ -108,22 +123,26 @@ def download():
     file_data["result4"] = int(results[3])
     file_data["result5"] = int(results[4])
     # file_data["bb"] = {'x': 100, 'y': 70, 'z': 88}
-
-    # Making json file
-    print(json.dumps(file_data, ensure_ascii=False, indent="\t"))
-    with open('tempDB/result/result.json', 'w', encoding='utf-8') as make_file:
-        json.dump(file_data, make_file, ensure_ascii=False, indent="\t")
     
     # Make image files (2. image files)
     for i, index in enumerate(top_indices):
         frame1, frame2 = frame_pairs[index]
-        cv2.imwrite(f"tempDB/image/best{i + 1}_user.jpg", frame1)
-        cv2.imwrite(f"tempDB/image/best{i + 1}_pro.jpg", frame2)
+        cv2.imwrite(f"tempDB/image/best{i + 1}_user_org.jpg", frame1)
+        cv2.imwrite(f"tempDB/image/best{i + 1}_pro_org.jpg", frame2)
+        
+        # 관절 그리기
+        joint_image1 = draw_joints(f"tempDB/image/best{i + 1}_user_org.jpg")
+        joint_image2 = draw_joints(f"tempDB/image/best{i + 1}_pro_org.jpg")
+
+        # 관절이 그려진 이미지 저장
+        cv2.imwrite(f"tempDB/image/best{i + 1}_user.jpg", joint_image1)
+        cv2.imwrite(f"tempDB/image/best{i + 1}_pro.jpg", joint_image2)
 
     # Make graph file (3. graph file) -> pose_match.py
 
-    # Upload json file
-    storage.child('temp/result/'+email_string+'/'+videoName_string+'.json').put('tempDB/result/result.json')
+    # Upload result on realtime DB
+    # storage.child('temp/result/'+email_string+'/'+videoName_string+'.json').put('tempDB/result/result.json')
+    database.child('temp/result/'+email_string.replace(".","_")+'/'+videoName_string).set(file_data)
 
     # Upload image files
     for i in range(1,6):
@@ -140,9 +159,12 @@ def download():
     storage.child(graph_path).put(graph_local_path)
 
     # Remove temporary files in the volume
-    os.remove('tempDB/result/result.json')
+    # os.remove('tempDB/result/result.json')
     for i in range(1,6):
+        pass
+        os.remove(f'tempDB/image/best{i}_user_org.jpg')
         os.remove(f'tempDB/image/best{i}_user.jpg')
+        os.remove(f'tempDB/image/best{i}_pro_org.jpg')
         os.remove(f'tempDB/image/best{i}_pro.jpg')
     os.remove(local_path)
     os.remove(local_path_pro)
