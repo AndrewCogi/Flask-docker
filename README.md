@@ -1,7 +1,5 @@
 # Flask-docker (Server)
 
----
-
 ### 📌 Introduction
 
 **The Flask-based Workout Video Analysis Server** is designed to analyze users' workout videos and provide insightful results. Built upon the Flask framework, this server offers a seamless and user-friendly experience, enabling fitness enthusiasts to gain valuable insights into their exercise routines.
